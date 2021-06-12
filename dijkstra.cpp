@@ -116,7 +116,7 @@ void print_cheapest_pub_transp_route(int now){
 
 void find_shortest_path(){
 	//set distance pada semua vertex menjadi infinite
-	for(int i=1; i<=v; i++)
+	for(int i=0; i<v; i++)
 		dist[i] = maks;
 		
 	//insert vertex awal ke dalam priority queue
@@ -147,6 +147,7 @@ void find_shortest_path(){
 				dist[y] = dist[x] + weight;
 				travel_time[y] = travel_time[x] + trav_time;
 				prev[y].vertex = x;
+				cout<<x<<" -> "<<y<<" : "<<dist[y]<<endl;
 				pq.push(make_pair(dist[y],y));
 			}
 		}
@@ -172,7 +173,7 @@ void find_shortest_path(){
 
 void find_fastest_path(){
 	//set waktu tempuh pada semua vertex menjadi infinite
-	for(int i=1; i<=v; i++)
+	for(int i=0; i<v; i++)
 		travel_time[i] = maks;
 		
 	//insert vertex awal ke priority queue
@@ -228,7 +229,7 @@ void find_fastest_path(){
 
 void find_fastest_path_pub_transp(){
 	//set travel time pada semua vertex menjadi infinite
-	for(int i=1; i<=v; i++)
+	for(int i=0; i<v; i++)
 		travel_time[i] = maks;
 	
 	//insert vertex awal ke priority queue dan anggap waktu keberangkatan (detik) dimulai dari menit 00
@@ -297,7 +298,7 @@ void find_fastest_path_pub_transp(){
 
 void find_cheapest_path_pub_transp(){
 	//set cost pada semua vertex menjadi infinite
-	for(int i=1; i<=v+pt; i++)
+	for(int i=0; i<v+pt; i++)
 		cost[i] = maks;
 		
 	//insert vertex awal ke dalam priority queue
