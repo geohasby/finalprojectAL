@@ -1,9 +1,6 @@
-//vertex max 100 -> 0-9
-//panjang jalan (km)
-
 // BATASAN :
-// 1 <= vertex <= 100 (zero-index)
-// vertex-1 <= edge <= vertex*(vertex-1)/2
+// 1 <= banyak titik / vertex <= 100 (zero-index)
+// vertex-1 <= banyak jalan / edge <= vertex*(vertex-1)/2
 // 1 <= panjang jalan (km) <= 100
 // 1 <= kendaraan umum <= 100
 // 1 <= ongkos kendaraan umum <= 100.000
@@ -49,7 +46,7 @@ priority_queue< pii , vector< pii > , greater< pii > >pq;	//priority queue atau 
 void add_pub_transp_edge(){
 	for(int i=0; i<pt; i++){
 		z = pub_transp[i].spot;			//banyak titik yang dilewati rute kendaraan
-		for(int j=0; j<z/2+1; j++){
+		for(int j=0; j<z; j++){
 			x = pub_transp[i].route[j];	//titik saat ini
 			y = v + i;					//titik kendaraan
 			
@@ -72,44 +69,44 @@ void print_route(int now){
 	return;
 }
 
-void print_pub_transp_route(int now){
+void print_fastest_pub_transp_route(int now){
 	if(prev[now].vertex != now){
-		x = now;
-		y = prev[now].vertex;
+		int a = now;
+		int b = prev[now].vertex;
 		
-		while((prev[y].vertex != y) and (prev[y].vehicle == prev[now].vehicle)){
-			x = y;
-			y = prev[y].vertex;
+		while((prev[b].vertex != b) and (prev[b].vehicle == prev[now].vehicle)){
+			a = b;
+			b = prev[b].vertex;
 		}
 		
-		print_pub_transp_route(y);
+		print_fastest_pub_transp_route(b);
 
-		cout<<"\n\tdari titik "<<y;
+		cout<<"\n\tdari titik "<<b;
 		
-		if(prev[x].waiting_time == 0)
+		if(prev[a].waiting_time == 0)
 			cout<<" tidak perlu menunggu ";
 		else{
 			cout<<" menunggu";
-			if(prev[x].waiting_time > 60)
-				cout<<' '<<prev[x].waiting_time / 60<<" menit";
-			if(prev[x].waiting_time % 60 > 0)
-				cout<<' '<<prev[x].waiting_time % 60<<" detik";	
+			if(prev[a].waiting_time > 60)
+				cout<<' '<<prev[a].waiting_time / 60<<" menit";
+			if(prev[a].waiting_time % 60 > 0)
+				cout<<' '<<prev[a].waiting_time % 60<<" detik";	
 		}
 		
-		cout<<", lalu naik "<<pub_transp[prev[x].vehicle].name<<" sampai ke titik "<<now;
+		cout<<", lalu naik "<<pub_transp[prev[a].vehicle].name<<" sampai ke titik "<<now;
 	}
 	return;
 }
 
-void print_cheapest_route(int now){
-	if(prev[now].vertex != now){			//jika bukan root / source
-		if(prev[now].vertex >= v){			//jika titik semu
+void print_cheapest_pub_transp_route(int now){
+	if(prev[now].vertex != now){
+		if(prev[now].vertex >= v){
 			temp = prev[now].vertex;
-			print_cheapest_route(prev[temp].vertex);
+			print_cheapest_pub_transp_route(prev[temp].vertex);
 			cout<<"\n\tdari titik "<<prev[temp].vertex<<" naik "<<pub_transp[temp-v].name<<" sampai ke titik "<<now<<" dengan ongkos Rp."<<pub_transp[temp-v].fare;
 		}
-		else{								//jika titik asli
-			print_cheapest_route(prev[now].vertex);
+		else{
+			print_cheapest_pub_transp_route(prev[now].vertex);
 			cout<<"\n\tdari titik "<<prev[now].vertex<<" naik "<<pub_transp[prev[now].vehicle].name<<" sampai ke titik "<<now<<" dengan ongkos Rp."<<pub_transp[prev[now].vehicle].fare;
 		}		
 	}
@@ -286,7 +283,7 @@ void find_fastest_path_pub_transp(){
 		cout<<" - Tidak ditemukan rute dari vertex "<<src<<" ke vertex "<<dest<<endl;
 	else{
 		cout<<"\n - Rute dengan waktu tempuh tercepat : ";
-		print_pub_transp_route(dest);
+		print_fastest_pub_transp_route(dest);
 		cout<<"\n - Waktu yang dibutuhkan : ";
 		if(travel_time[dest] >= 3600)
 			cout<<travel_time[dest] / 3600<<" jam ";
@@ -300,7 +297,7 @@ void find_fastest_path_pub_transp(){
 
 void find_cheapest_path_pub_transp(){
 	//set cost pada semua vertex menjadi infinite
-	for(int i=1; i<=v; i++)
+	for(int i=1; i<=v+pt; i++)
 		cost[i] = maks;
 		
 	//insert vertex awal ke dalam priority queue
@@ -331,6 +328,7 @@ void find_cheapest_path_pub_transp(){
 				if(cost[y] > cost[x] + weight){
 					cost[y] = cost[x] + weight;
 					prev[y].vertex = x;
+					prev[y].vehicle = vhc_now;
 					pq.push(make_pair(cost[y],y));
 				}
 			}
@@ -342,7 +340,7 @@ void find_cheapest_path_pub_transp(){
 		cout<<"\n - Tidak ditemukan rute dari vertex "<<src<<" ke vertex "<<dest<<endl;
 	else{
 		cout<<"\n - Rute dengan ongkos termurah : ";
-		print_cheapest_route(dest);
+		print_cheapest_pub_transp_route(dest);
 		cout<<"\n - Ongkos = Rp."<<cost[dest]<<endl;
 	}
 }
@@ -377,7 +375,7 @@ int main(){
 	cin>>pt;
 	
 	cout<<"Masukkan keterangan untuk masing-masing jenis transportasi umum : "<<endl;
-	cout<<"(nama, kecepatan (km/h), headway (menit), jumlah titik yang dilalui dalam 1x putaran, dan titik mana saja yang dilalui)"<<endl;
+	cout<<"(nama, harga, kecepatan (km/h), headway (menit), jumlah titik yang dilalui dalam 1x putaran, dan titik mana saja yang dilalui)"<<endl;
 	for(int i=0; i<pt; i++){
 		cin>>pub_transp[i].name>>pub_transp[i].fare>>pub_transp[i].speed>>pub_transp[i].headway>>pub_transp[i].spot;
 		trav_time = 0;
