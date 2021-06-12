@@ -18,45 +18,48 @@ using namespace std;
 struct edg{
 	int distance;			//jarak
 	int speed;				//kecepatan rata-rata jika dilalui kendaraan pribadi
-	vector< pii > vehicle;	//pilihan kendaraan (indeks kendaraan dan menit keberangkatan)
+	vector< pii > vehicle;	//pilihan kendaraan (indeks kendaraan dan menit keberangkatan / ongkos)
 };
 
 struct transp{
-	string name;			//nama kendaraan
-	int speed;				//kecepatan kendaraan
-	int headway;			//headway kendaraan
-	int spot;				//banyak titik yang dilalui rute kendaraan
-	vector<int>route;		//rute kendaraan
+	string name;		//nama kendaraan
+	int fare;			//ongkos (rupiah) jauh dekat sama
+	int speed;			//kecepatan kendaraan
+	int headway;		//headway kendaraan
+	int spot;			//banyak titik yang dilalui rute kendaraan
+	vector<int>route;	//rute kendaraan
 };
 
 struct prv{
-	int vertex;
-	int waiting_time;
-	int vehicle;
+	int vertex;				//index vertex
+	int waiting_time;		//waktu tunggu
+	int vehicle;			//index kendaraan ummum yang digunakan
 };
 
 int v, e, x, y, z, s, pt, d, src, dest, temp, hw, spd, mnt, wt, dt, weight, trav_time, jam, menit, vhc_now, prev_vhc;
-edg edge[105][105];			//menyimpan informasi panjang jalan, kecepatan rata-rata (kendaraan pribadi), transportasi umum yang tersedia
+edg edge[205][205];			//menyimpan informasi panjang jalan, kecepatan rata-rata (kendaraan pribadi), transportasi umum yang tersedia
 int dist[105];				//menyimpan jarak dari vertex asal ke masing-masing vertex lainnya
 int travel_time[105];		//menyimpan waktu tempuh dari vertex asal ke masing-masing vertex lainnya
-prv prev[105];				//menyimpan informasi vertex, waktu tunggu, dan kendaraan yang digunakan sebelumnya
+int cost[205];				//menyimpan biaya transportasi umum dari vertex asal ke masing-masing vertex lainnya
+prv prev[205];				//menyimpan informasi vertex, waktu tunggu, dan kendaraan yang digunakan sebelumnya
 transp pub_transp[105];		//menyimpan informasi kendaraan umum (nama, ongkos, kecepatan, headway)
-vector<int>adj[105];		//adjacency list
+vector<int>adj[205];		//adjacency list
 priority_queue< pii , vector< pii > , greater< pii > >pq;	//priority queue atau min heap yang digunakan untuk algoritma dijkstra
 
-void add_pub_transp_route(){
-//	for(int i=0; i<pt; i++){
-//		z = pub_transp[i].spot;		//banyak titik yang dilewati rute kendaraan
-//		temp = 0;					//variable temp untuk menyimpan jarak jalan yang sudah ditempuh kendaraan dari titik
-//		for(int j=0; j<z; j++){
-//			x = pub_transp[i].route[j];			//titik sekarang
-//			y = pub_transp[i].route[(j+1)%z];	//titik selanjutnya
-//			
-//			if(edge[x][y].distance == 0){
-//				
-//			}
-//		}
-//	}
+void add_pub_transp_edge(){
+	for(int i=0; i<pt; i++){
+		z = pub_transp[i].spot;			//banyak titik yang dilewati rute kendaraan
+		for(int j=0; j<z/2+1; j++){
+			x = pub_transp[i].route[j];	//titik saat ini
+			y = v + i;					//titik kendaraan
+			
+			adj[x].push_back(y);		//buat edge baru dari x ke y
+			adj[y].push_back(x);		//buat edge baru dari y ke x
+			
+			edge[x][y].vehicle.push_back(make_pair(i, pub_transp[i].fare));		//naik kendaraan = bayar
+			edge[y][x].vehicle.push_back(make_pair(i, 0));						//turun kendaraan = gratis
+		}
+	}
 }
 
 void print_route(int now){
@@ -71,21 +74,46 @@ void print_route(int now){
 
 void print_pub_transp_route(int now){
 	if(prev[now].vertex != now){
-		print_pub_transp_route(prev[now].vertex);
-		cout<<"\n\tdari titik "<<prev[now].vertex<<" : ";
+		x = now;
+		y = prev[now].vertex;
 		
-		if(prev[now].waiting_time == 0)
-			cout<<"tidak perlu menunggu ";
-		else{
-			cout<<"menunggu ";
-			if(prev[now].waiting_time > 60)
-				cout<<prev[now].waiting_time / 60<<" menit ";
-			if(prev[now].waiting_time % 60 > 0)
-				cout<<prev[now].waiting_time % 60<<" detik ";	
+		while((prev[y].vertex != y) and (prev[y].vehicle == prev[now].vehicle)){
+			x = y;
+			y = prev[y].vertex;
 		}
 		
-		cout<<"-> naik "<<pub_transp[prev[now].vehicle].name<<" ke titik "<<now;
+		print_pub_transp_route(y);
+
+		cout<<"\n\tdari titik "<<y;
+		
+		if(prev[x].waiting_time == 0)
+			cout<<" tidak perlu menunggu ";
+		else{
+			cout<<" menunggu";
+			if(prev[x].waiting_time > 60)
+				cout<<' '<<prev[x].waiting_time / 60<<" menit";
+			if(prev[x].waiting_time % 60 > 0)
+				cout<<' '<<prev[x].waiting_time % 60<<" detik";	
+		}
+		
+		cout<<", lalu naik "<<pub_transp[prev[x].vehicle].name<<" sampai ke titik "<<now;
 	}
+	return;
+}
+
+void print_cheapest_route(int now){
+	if(prev[now].vertex != now){			//jika bukan root / source
+		if(prev[now].vertex >= v){			//jika titik semu
+			temp = prev[now].vertex;
+			print_cheapest_route(prev[temp].vertex);
+			cout<<"\n\tdari titik "<<prev[temp].vertex<<" naik "<<pub_transp[temp-v].name<<" sampai ke titik "<<now<<" dengan ongkos Rp."<<pub_transp[temp-v].fare;
+		}
+		else{								//jika titik asli
+			print_cheapest_route(prev[now].vertex);
+			cout<<"\n\tdari titik "<<prev[now].vertex<<" naik "<<pub_transp[prev[now].vehicle].name<<" sampai ke titik "<<now<<" dengan ongkos Rp."<<pub_transp[prev[now].vehicle].fare;
+		}		
+	}
+	
 	return;
 }
 
@@ -131,8 +159,9 @@ void find_shortest_path(){
 	if(dist[dest] == maks)	//jika jarak pada vertex tujuan = infinite (berarti tidak ditemukan rute)
 		cout<<"\n - Tidak ditemukan rute dari vertex "<<src<<" ke vertex "<<dest<<endl;
 	else{
-		cout<<"\n - Jarak terpendek = "<<dist[dest]<<" km"<<endl<<" - Rute : ";
+		cout<<"\n - Rute dengan jarak terpendek : ";
 		print_route(dest);
+		cout<<"\n - Jarak = "<<dist[dest]<<" km";
 		cout<<"\n - Waktu yang dibutuhkan : ";
 		if(travel_time[dest] >= 3600)
 			cout<<travel_time[dest] / 3600<<" jam ";
@@ -186,8 +215,9 @@ void find_fastest_path(){
 	if(travel_time[dest] == maks)	//jika waktu tempuh pada vertex tujuan = infinite (berarti tidak ditemukan rute)
 		cout<<"\n - Tidak ditemukan rute dari vertex "<<src<<" ke vertex "<<dest<<endl;
 	else{
-		cout<<"\n - Jarak dengan waktu tempuh tercepat = "<<dist[dest]<<" km"<<endl<<" - Rute : ";
+		cout<<"\n - Rute dengan waktu tempuh tercepat : ";
 		print_route(dest);
+		cout<<"\n - Jarak = "<<dist[dest]<<" km";
 		cout<<"\n - Waktu yang dibutuhkan : ";
 		if(travel_time[dest] >= 3600)
 			cout<<travel_time[dest] / 3600<<" jam ";
@@ -236,11 +266,12 @@ void find_fastest_path_pub_transp(){
 				else if(mnt % hw < dt)
 					wt = dt - (mnt % hw);
 				
-				weight = wt + 3600*d/spd;		//total waktu yang dibutuhkan (detik) untuk menuju ke vertex y dengan kendaraan tersebut
+				trav_time = wt + 3600*d/spd;		//total waktu yang dibutuhkan (detik) untuk menuju ke vertex y dengan kendaraan tersebut
 				
 				//jika waktu tempuh dari x ke y lebih cepat daripada waktu yang sudah ada di y, maka update nilainya
-				if(travel_time[y] > travel_time[x] + weight){
-					travel_time[y] = travel_time[x] + weight;
+				if(travel_time[y] > travel_time[x] + trav_time){
+					travel_time[y] = travel_time[x] + trav_time;
+					dist[y] = dist[x] + d;
 					prev[y].vertex = x;
 					prev[y].waiting_time = wt;
 					prev[y].vehicle = vhc_now;
@@ -254,66 +285,66 @@ void find_fastest_path_pub_transp(){
 	if(travel_time[dest] == maks)	//jika jarak pada vertex tujuan = infinite (berarti tidak ditemukan rute)
 		cout<<" - Tidak ditemukan rute dari vertex "<<src<<" ke vertex "<<dest<<endl;
 	else{
-		cout<<"\n - Waktu tempuh tercepat : ";
+		cout<<"\n - Rute dengan waktu tempuh tercepat : ";
+		print_pub_transp_route(dest);
+		cout<<"\n - Waktu yang dibutuhkan : ";
 		if(travel_time[dest] >= 3600)
 			cout<<travel_time[dest] / 3600<<" jam ";
 		if(travel_time[dest] % 3600 >= 60)
 			cout<<(travel_time[dest] % 3600) / 60<<" menit ";
 		if(travel_time[dest] % 60 > 0)
 			cout<<travel_time[dest]%60<<" detik ";
-		cout<<"\n - Rute : ";
-		print_pub_transp_route(dest);
-		
+		cout<<endl;
 	} 	
 }
 
-void find_cheapest_path(){
-//	//set cost pada semua vertex menjadi infinite
-//	for(int i=1; i<=v; i++)
-//		cost[i] = maks;
-//		
-//	//insert vertex awal dan cost awalnya masih 0
-//	pq.push(make_pair(0,a));
-//	cost[a] = 0;
-//	
-//	//set prev vertex menjadi vertex awal dan prev vehiclenya -1 (belum menggunakan kendaraan apapun)
-//	prev[a].vertex = a;
-//	prev[a].vehicle = -1;
-//	
-//	//looping sampai isi priority queue habis / kosong
-//	while(!pq.empty()){
-//		//ambil vertex pada top of priority queue yang merupakan vertex dengan ongkos paling minimum
-//		x = pq.top().second;	//index vertex yang ada di top priority queue
-//		pq.pop();				//keluarkan vertex yang ada di top priority queue
-//		
-//		//cek semua tetangga dari vertex x
-//		for(int i=0; i<adj[x].size(); i++){
-//			y = adj[x][i].first;			//index vertex tetangga
-//			
-//			//cek semua kemungkinan kendaraan umum yang tersedia dari vertex x ke y
-//			for(int j=0; j<option[x][y].size(); j++){
-//				prev_vhc = prev[x].vehicle;	//kendaraan yang digunakan sebelumnya
-//				vhc_now = option[x][y][j];	//kendaraan yang (mungkin) akan digunakan sekarang
-//				
-//				if(prev_vhc == vhc_now)		//jika kendaraan yang digunakan sebelumnya sama dengan sekarang
-//					vhc_now_fare = 0;		//maka ongkosnya 0 (karena sudah dibayar di sebelumnya)
-//				else vhc_now_fare = pub_transp[vhc_now].fare;	//ongkos kendaraan sekarang
-//				
-//				//jika biaya dari x ke y lebih kecil daripada biaya yang sudah ada di y, maka update nilainya
-//				if(cost[y] > cost[x] + vhc_now_fare){
-//					cost[y] = cost[x] + vhc_now_fare;
-//					prev[y].vertex = x;
-//					prev[y].vehicle = vhc_now;
-//					pq.push(make_pair(cost[y],y));
-//				}			
-//			}
-//		}
-//	}
-//	
-//	//outputkan biaya termurah untuk menuju ke vertex tujuan
-//	if(cost[b] == maks)	//jika biaya pada vertex tujuan = infinite (berarti tidak ditemukan rute)
-//		cout<<"Tidak ditemukan rute dari vertex "<<a<<" ke vertex "<<b<<endl;
-//	else cout<<"Biaya termurah = "<<cost[b]<<" rupiah"<<endl<<"Rute : "<<route(b, "")<<endl;
+void find_cheapest_path_pub_transp(){
+	//set cost pada semua vertex menjadi infinite
+	for(int i=1; i<=v; i++)
+		cost[i] = maks;
+		
+	//insert vertex awal ke dalam priority queue
+	pq.push(make_pair(0,src));
+	
+	//set ongkos awalny 0
+	cost[src] = 0;
+	prev[src].vertex = src;
+	
+	//looping sampai isi priority queue habis / kosong
+	while(!pq.empty()){
+		//ambil vertex pada top of priority queue yang merupakan vertex dengan ongkos paling minimum
+		x = pq.top().second;	//index vertex yang ada di top priority queue
+		pq.pop();				//keluarkan vertex yang ada di top priority queue
+		
+		//cek semua tetangga dari vertex x
+		for(int i=0; i<adj[x].size(); i++){
+			y = adj[x][i];										//index vertex tetangga
+			
+			for(int j=0; j<edge[x][y].vehicle.size(); j++){
+				vhc_now = edge[x][y].vehicle[j].first;			//kendaraan yang (mungkin) akan digunakan sekarang
+				
+				if(x < v)										//jika titik keberangkatan dari titik asli
+					weight = pub_transp[vhc_now].fare;			//	maka bobot jalannya sesuai ongkos kendaraan
+				else weight = 0;								//jika titik keberangkatan dari titik semu, maka bobot jalannya 0
+				
+				//jika ongkos dari x ke y lebih kecil daripada ongkos yang ada di y, maka update nilainya
+				if(cost[y] > cost[x] + weight){
+					cost[y] = cost[x] + weight;
+					prev[y].vertex = x;
+					pq.push(make_pair(cost[y],y));
+				}
+			}
+		}
+	}
+	
+	//outputkan jarak terpendek untuk menuju ke vertex tujuan
+	if(cost[dest] == maks)	//jika jarak pada vertex tujuan = infinite (berarti tidak ditemukan rute)
+		cout<<"\n - Tidak ditemukan rute dari vertex "<<src<<" ke vertex "<<dest<<endl;
+	else{
+		cout<<"\n - Rute dengan ongkos termurah : ";
+		print_cheapest_route(dest);
+		cout<<"\n - Ongkos = Rp."<<cost[dest]<<endl;
+	}
 }
 
 int main(){
@@ -348,7 +379,7 @@ int main(){
 	cout<<"Masukkan keterangan untuk masing-masing jenis transportasi umum : "<<endl;
 	cout<<"(nama, kecepatan (km/h), headway (menit), jumlah titik yang dilalui dalam 1x putaran, dan titik mana saja yang dilalui)"<<endl;
 	for(int i=0; i<pt; i++){
-		cin>>pub_transp[i].name>>pub_transp[i].speed>>pub_transp[i].headway>>pub_transp[i].spot;
+		cin>>pub_transp[i].name>>pub_transp[i].fare>>pub_transp[i].speed>>pub_transp[i].headway>>pub_transp[i].spot;
 		trav_time = 0;
 		
 		//input titik pemberhentian kendaraan umum
@@ -377,11 +408,20 @@ int main(){
 	cin>>jam>>menit;
 	
 	cout<<"\nMenggunakan kendaraan pribadi :";
+	
+	memset(prev, 0, sizeof(prev));	//reset value array prev	
 	find_shortest_path();
+	
 	memset(prev, 0, sizeof(prev));	//reset value array prev	
 	find_fastest_path();
 	
 	cout<<"\nMenggunakan transportasi umum :";
+	
 	memset(prev, 0, sizeof(prev));	//reset value array prev
 	find_fastest_path_pub_transp();
+	
+	add_pub_transp_edge();
+	
+	memset(prev, 0, sizeof(prev));	//reset value array prev
+	find_cheapest_path_pub_transp();
 }
