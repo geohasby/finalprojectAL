@@ -1,4 +1,4 @@
-Input hanya berupa angka, kecuali nama kendaraan umum
+Input hanya berupa angka, kecuali nama kendaraan umum<br>
 contoh input :<br>
 17 (jumlah titik)<br>
 27 (jumlah jalan)<br>
