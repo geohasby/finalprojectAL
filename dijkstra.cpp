@@ -87,7 +87,7 @@ void print_fastest_pub_transp_route(int now){
 			cout<<" tidak perlu menunggu ";
 		else{
 			cout<<" menunggu";
-			if(prev[a].waiting_time > 60)
+			if(prev[a].waiting_time >= 60)
 				cout<<' '<<prev[a].waiting_time / 60<<" menit";
 			if(prev[a].waiting_time % 60 > 0)
 				cout<<' '<<prev[a].waiting_time % 60<<" detik";	
@@ -100,10 +100,10 @@ void print_fastest_pub_transp_route(int now){
 
 void print_cheapest_pub_transp_route(int now){
 	if(prev[now].vertex != now){
-		if(prev[now].vertex >= v){
-			temp = prev[now].vertex;
-			print_cheapest_pub_transp_route(prev[temp].vertex);
-			cout<<"\n\tdari titik "<<prev[temp].vertex<<" naik "<<pub_transp[temp-v].name<<" sampai ke titik "<<now<<" dengan ongkos Rp."<<pub_transp[temp-v].fare;
+		if(prev[now].vertex >= v){	
+			int tmp = prev[now].vertex;
+			print_cheapest_pub_transp_route(prev[tmp].vertex);
+			cout<<"\n\tdari titik "<<prev[tmp].vertex<<" naik "<<pub_transp[tmp-v].name<<" sampai ke titik "<<now<<" dengan ongkos Rp."<<pub_transp[tmp-v].fare;
 		}
 		else{
 			print_cheapest_pub_transp_route(prev[now].vertex);
@@ -342,7 +342,7 @@ void find_cheapest_path_pub_transp(){
 	else{
 		cout<<"\n - Rute dengan ongkos termurah : ";
 		print_cheapest_pub_transp_route(dest);
-		cout<<"\n - Ongkos = Rp."<<cost[dest]<<endl;
+		cout<<"\n - Ongkos total = Rp."<<cost[dest]<<endl;
 	}
 }
 
