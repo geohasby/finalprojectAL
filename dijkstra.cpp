@@ -266,10 +266,12 @@ void find_fastest_path_pub_transp(){
 				
 				trav_time = wt + 3600*d/spd;		//total waktu yang dibutuhkan (detik) untuk menuju ke vertex y dengan kendaraan tersebut
 				
+				cout<<endl<<x<<" -> "<<y<<" : "<<travel_time[x] + trav_time<<" ("<<wt<<" + "<<3600*d/spd<<") "<<pub_transp[vhc_now].name;
+				
 				//jika waktu tempuh dari x ke y lebih cepat daripada waktu yang sudah ada di y, maka update nilainya
 				if(travel_time[y] > travel_time[x] + trav_time){
+					cout<<" masuk";
 					travel_time[y] = travel_time[x] + trav_time;
-					dist[y] = dist[x] + d;
 					prev[y].vertex = x;
 					prev[y].waiting_time = wt;
 					prev[y].vehicle = vhc_now;
@@ -391,6 +393,7 @@ int main(){
 			if(j > 0){
 				x = pub_transp[i].route[j-1];
 				y = pub_transp[i].route[j % pub_transp[i].spot];
+				cout<<pub_transp[i].name<<" "<<x<<" : "<<trav_time<<" -> "<<trav_time % (pub_transp[i].headway * 60)<<endl;
 				edge[x][y].vehicle.push_back(make_pair(i, trav_time % (pub_transp[i].headway * 60)));
 				trav_time += (3600 * edge[x][y].distance / pub_transp[i].speed);
 			}
