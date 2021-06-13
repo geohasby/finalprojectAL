@@ -1,12 +1,3 @@
-// BATASAN :
-// 1 <= banyak titik / vertex <= 100 (zero-index)
-// vertex-1 <= banyak jalan / edge <= vertex*(vertex-1)/2
-// 1 <= panjang jalan (km) <= 100
-// 1 <= kendaraan umum <= 100
-// 1 <= ongkos kendaraan umum <= 100.000
-// 1 <= kecepatan (km/jam) <= 100
-// headway (menit) : faktor dari 60 (1, 2, 3, 4, 5, 6, 10, 12, 15, 20, 30, 60) 
-
 #include<bits/stdc++.h>
 #define pii pair<int, int>
 #define maks INT_MAX
@@ -147,7 +138,6 @@ void find_shortest_path(){
 				dist[y] = dist[x] + weight;
 				travel_time[y] = travel_time[x] + trav_time;
 				prev[y].vertex = x;
-				cout<<x<<" -> "<<y<<" : "<<dist[y]<<endl;
 				pq.push(make_pair(dist[y],y));
 			}
 		}
@@ -266,11 +256,8 @@ void find_fastest_path_pub_transp(){
 				
 				trav_time = wt + 3600*d/spd;		//total waktu yang dibutuhkan (detik) untuk menuju ke vertex y dengan kendaraan tersebut
 				
-				cout<<endl<<x<<" -> "<<y<<" : "<<travel_time[x] + trav_time<<" ("<<wt<<" + "<<3600*d/spd<<") "<<pub_transp[vhc_now].name;
-				
 				//jika waktu tempuh dari x ke y lebih cepat daripada waktu yang sudah ada di y, maka update nilainya
 				if(travel_time[y] > travel_time[x] + trav_time){
-					cout<<" masuk";
 					travel_time[y] = travel_time[x] + trav_time;
 					prev[y].vertex = x;
 					prev[y].waiting_time = wt;
@@ -393,7 +380,6 @@ int main(){
 			if(j > 0){
 				x = pub_transp[i].route[j-1];
 				y = pub_transp[i].route[j % pub_transp[i].spot];
-				cout<<pub_transp[i].name<<" "<<x<<" : "<<trav_time<<" -> "<<trav_time % (pub_transp[i].headway * 60)<<endl;
 				edge[x][y].vehicle.push_back(make_pair(i, trav_time % (pub_transp[i].headway * 60)));
 				trav_time += (3600 * edge[x][y].distance / pub_transp[i].speed);
 			}
